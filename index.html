@@ -319,14 +319,14 @@
             .ln {
                 display: flex;
                 flex-wrap: wrap;
-                align-items: flex-end;
-                min-height: 1.3em;
-                margin: 2px 0
+                align-items: flex-start;
+                margin: 1px 0
             }
 
             .seg {
                 display: inline-flex;
-                flex-direction: column
+                flex-direction: column;
+                justify-content: flex-end
             }
 
             .c {
@@ -335,13 +335,14 @@
                 font-size: var(--cs);
                 padding-right: .45em;
                 white-space: pre;
-                line-height: 1.3
+                line-height: 1.15;
+                min-height: 1.05em
             }
 
             .l {
                 font-size: var(--fs);
                 white-space: pre;
-                line-height: 1.35
+                line-height: 1.3
             }
 
             .sec {
@@ -484,6 +485,8 @@ Como en Pentecostés [E][C#m]
         function tr(ch, n, flat) { return n ? ch.replace(/[A-G][#b]?/g, m => { let i = idx(m); return i < 0 ? m : (flat ? FL : SH)[((i + n) % 12 + 12) % 12] }) : ch }
         function useFlat(s, n) { if (/\[[A-G]b/.test(s.content)) return true; const k = (s.key || '').match(/^([A-G][#b]?)(m?)/); if (!k) return false; const t = ((idx(k[1]) + n) % 12 + 12) % 12; return (k[2] ? [0, 2, 3, 5, 7, 10] : [1, 3, 5, 8, 10]).includes(t) }
         function chordHTML(src, n = 0, flat = false) {
+            src = cleanTxt(src);
+            if (hasPlainChords(src)) src = toChordPro(src);
             return src.split('\n').map(line => {
                 const sec = line.match(/^\s*\[([^\]]+)\]\s*$/);
                 if (sec && !CH.test(sec[1].trim())) return `<div class="sec">${esc(sec[1])}</div>`;
@@ -491,7 +494,10 @@ Como en Pentecostés [E][C#m]
                 const segs = [], re = /\[([^\]]*)\]/g; let cur = { c: '', t: '' }, last = 0, m;
                 while ((m = re.exec(line))) { cur.t += line.slice(last, m.index); segs.push(cur); cur = { c: m[1].trim(), t: '' }; last = re.lastIndex }
                 cur.t += line.slice(last); segs.push(cur);
-                return '<div class="ln">' + segs.filter(s => s.c || s.t).map(s => `<span class="seg"><span class="c">${s.c ? esc(CH.test(s.c) ? tr(s.c, n, flat) : s.c) : '&nbsp;'}</span><span class="l">${esc(s.t) || '&nbsp;'}</span></span>`).join('') + '</div>';
+                return '<div class="ln">' + segs.filter(s => s.c || s.t).map(s => {
+                    const ch = s.c ? esc(CH.test(s.c) ? tr(s.c, n, flat) : s.c) : '&nbsp;';
+                    return `<span class="seg"><span class="c">${ch}</span>${s.t ? `<span class="l">${esc(s.t)}</span>` : ''}</span>`;
+                }).join('') + '</div>';
             }).join('');
         }
 
@@ -623,31 +629,62 @@ Como en Pentecostés [E][C#m]
 <div><label>Categoría</label><select id="f_g">${cats().map(c => `<option ${c === v.cat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div></div>
 <div style="margin-bottom:12px"><label>Enlace de Cifra Club (pega aquí la URL)</label><input id="f_u" placeholder="https://www.cifraclub.com/…" value="${esc(v.url)}" oninput="fromUrl()"></div>
 <div class="row" style="margin-bottom:6px"><label style="margin:0" class="f">Pega aquí la canción de Cifra Club (acordes sobre la letra): los acordes se colocan solos. También puedes escribir [acorde] a mano.</label><button class="btn g s" onclick="insC()">Insertar [ ]</button><button class="btn s" onclick="pasteImport()">Pegar texto largo</button><button class="btn g s" onclick="$('#f_x').value=SAMPLE;pv()">Ejemplo</button></div>
-<div id="pal" class="row" style="margin-bottom:8px"></div><div class="ed"><textarea id="f_x" spellcheck="false" oninput="pv()" onpaste="onPaste(event)" placeholder="Pega aquí la letra con acordes…">${esc(v.content)}</textarea><div class="pv song" id="pv"></div></div>
+<div id="pal" class="row" style="margin-bottom:8px"></div><div class="ed"><textarea id="f_x" spellcheck="false" oninput="pv()" onpaste="onPaste(event)" onblur="tidy(event)" placeholder="Pega aquí la letra con acordes…">${esc(v.content)}</textarea><div class="pv song" id="pv"></div></div>
 <div class="err" id="er"></div><div class="row"><button class="btn" id="sv" onclick="save()">Guardar</button><button class="btn g" onclick="go(${s ? `'song','${s.id}'` : `'lib'`})">Cancelar</button>${s ? `<button class="btn d" onclick="rm('${s.id}')">Eliminar</button>` : ''}</div>`
         }
         const IGN = /^(?:[|\/\\\-–—:]+|\(?[x×]\d+\)?|\.{2,})$/i;
+        /* Caracteres invisibles que suelen venir al pegar (espacio de ancho cero, marcas de dirección…) */
+        const ZW = /[\u200b\u200c\u200d\u200e\u200f\u2060\ufeff]/g;
+        const cleanTxt = s => String(s ?? '').replace(ZW, '');
         const isChordLine = l => { const t = l.trim().split(/\s+/); return !!l.trim() && t.every(x => CH.test(x) || IGN.test(x)) && t.some(x => CH.test(x)) };
-        const hasBracketChord = txt => [...txt.matchAll(/\[([^\]]+)\]/g)].some(m => CH.test(m[1].trim()));
-        const hasPlainChords = txt => !hasBracketChord(txt) && txt.replace(/\r/g, '').split('\n').some(isChordLine);
+        /* Una línea "solo acordes": vale tanto con corchetes ([G#m]  [F#]) como sin ellos (G#m   F#).
+           Devuelve el acorde y su columna, o null si la línea no es solo de acordes. */
+        const BR_ONLY = /^\s*(?:\[[^\]]+\]\s*)+$/;
+        function chordOnly(l) {
+            if (BR_ONLY.test(l)) {
+                const t = [...l.matchAll(/\[([^\]]+)\]/g)].map(m => ({ c: m[1].trim(), col: m.index }));
+                return t.length && t.every(x => CH.test(x.c)) ? t : null;
+            }
+            if (!isChordLine(l)) return null;
+            const t = [...l.matchAll(/\S+/g)].filter(m => CH.test(m[0])).map(m => ({ c: m[0], col: m.index }));
+            return t.length ? t : null;
+        }
+        const hasPlainChords = txt => cleanTxt(txt).replace(/\r/g, '').split('\n').some(l => !!chordOnly(l));
         function guessKey(cp) { for (const m of cp.matchAll(/\[([^\]]+)\]/g)) { const c = m[1].trim(); if (CH.test(c)) { const r = c.match(/^([A-G][#b]?)(m(?!aj))?/); const k = r ? r[1] + (r[2] || '') : ''; return KEYS.includes(k) ? k : '' } } return '' }
+        /* Pega los acordes dentro de la línea de letra. Si la línea venía centrada
+           o desalineada (lo normal al pegar), los pone al inicio para que queden
+           pegados a la letra. Si venían alineados de verdad, respeta la columna. */
+        function mergeChords(lyric, toks) {
+            const lead = (lyric.match(/^\s*/) || [''])[0].length;
+            const trust = toks[0].col <= lead + 2;
+            const placed = toks.map((t, i) => ({ c: t.c, i, at: trust ? Math.max(lead, Math.min(t.col, lyric.length)) : lead }));
+            let prev = -1;
+            placed.forEach(p => { if (p.at < prev) p.at = prev; prev = p.at });
+            let s = lyric;
+            placed.sort((a, b) => b.at - a.at || b.i - a.i).forEach(p => {
+                s = s.slice(0, p.at) + '[' + p.c + ']' + s.slice(p.at);
+            });
+            return s.trimEnd();
+        }
         function toChordPro(txt) {
-            const L = txt.replace(/\r/g, '').replace(/\u00a0/g, ' ').replace(/\t/g, '    ').split('\n'), out = [];
-            const isC = isChordLine, bc = l => l.trim().split(/\s+/).filter(x => CH.test(x)).map(c => '[' + c + ']').join(' ');
+            const L = cleanTxt(txt).replace(/\r/g, '').replace(/\u00a0/g, ' ').replace(/\t/g, '    ').split('\n'), out = [];
+            const bc = l => l.trim().split(/\s+/).filter(x => CH.test(x)).map(c => '[' + c + ']').join(' ');
             const NM = '(?:pr[eé]-?\\s?)?(?:intro(?:ducci[oó]n)?|verso|estrofa|coro|estribillo|puente|instrumental|interludio|final|outro|solo|tag|coda|verse|chorus|bridge|refr[aã]o|ponte|(?:primeira|segunda|terceira)\\s+parte|parte)(?:\\s*\\d+)?';
             const SEC = new RegExp('^\\s*\\[?\\s*(' + NM + ')\\s*\\]?\\s*:?\\s*$', 'i'), SEC2 = new RegExp('^\\s*(' + NM + ')\\s*:\\s*(.+)$', 'i'), SEC3 = /^\s*\[([^\]]+)\]\s+(.+)$/;
+            const isSec = l => { const sm = l.match(SEC), s2 = l.match(SEC2), s3 = l.match(SEC3); return !!(sm && !chordOnly(l)) || !!s2 || !!(s3 && !CH.test(s3[1].trim())) };
             for (let i = 0; i < L.length; i++) {
                 const l = L[i], sm = l.match(SEC), s2 = l.match(SEC2), s3 = l.match(SEC3);
-                if (sm && !isC(l)) { out.push('[' + sm[1].trim() + ']'); continue }
-                if (s2 && isC(s2[2])) { out.push('[' + s2[1] + ']'); out.push(bc(s2[2])); continue }
-                if (s3 && !CH.test(s3[1].trim()) && isC(s3[2])) { out.push('[' + s3[1].trim() + ']'); out.push(bc(s3[2])); continue }
-                if (isC(l)) {
-                    const nx = L[i + 1];
-                    if (nx !== undefined && nx.trim() && !isC(nx) && !SEC.test(nx) && !SEC2.test(nx) && !SEC3.test(nx)) {
-                        let s = nx;[...l.matchAll(/\S+/g)].reverse().forEach(m => { if (!CH.test(m[0])) return; if (m.index > s.length) s = s.padEnd(m.index); s = s.slice(0, m.index) + '[' + m[0] + ']' + s.slice(m.index) });
-                        out.push(s.trimEnd()); i++;
-                    } else out.push(bc(l));
-                    continue
+                if (sm && !chordOnly(l)) { out.push('[' + sm[1].trim() + ']'); continue }
+                if (s2 && isChordLine(s2[2])) { out.push('[' + s2[1] + ']'); out.push(bc(s2[2])); continue }
+                if (s3 && !CH.test(s3[1].trim()) && isChordLine(s3[2])) { out.push('[' + s3[1].trim() + ']'); out.push(bc(s3[2])); continue }
+                const toks = chordOnly(l);
+                if (toks) {
+                    /* salta líneas en blanco hasta encontrar la letra a la que pertenecen */
+                    let j = i + 1;
+                    while (j < L.length && !L[j].trim()) j++;
+                    const nx = L[j];
+                    if (nx !== undefined && !chordOnly(nx) && !isSec(nx)) { out.push(mergeChords(nx, toks)); i = j; continue }
+                    out.push(toks.map(t => '[' + t.c + ']').join(' ')); continue;
                 }
                 out.push(l.trimEnd());
             }
@@ -696,6 +733,16 @@ Como en Pentecostés [E][C#m]
             if (n) toast('Título y artista tomados del enlace; revísalos');
         }
         function pv() { $('#pv').innerHTML = chordHTML($('#f_x').value) || '<span class="mu">La vista previa aparece aquí.</span>' }
+        /* Al salir del cuadro de texto, si quedaron acordes en su propia línea, se acomodan solos. */
+        function tidy(e) {
+            if (e && e.relatedTarget && (e.relatedTarget.tagName === 'BUTTON' || e.relatedTarget.tagName === 'A')) return;
+            const x = $('#f_x'); if (!x) return;
+            const v = x.value; if (!hasPlainChords(v)) return;
+            const cp = toChordPro(v); if (cp === v) return;
+            const a = x.selectionStart, b = x.selectionEnd;
+            x.value = cp; pv();
+            try { x.setSelectionRange(Math.min(a, cp.length), Math.min(b, cp.length)) } catch (err) { }
+        }
         function insC() { const t = $('#f_x'), p = t.selectionStart; t.value = t.value.slice(0, p) + '[]' + t.value.slice(t.selectionEnd); t.focus(); t.setSelectionRange(p + 1, p + 1) }
         async function save() {
             let content = $('#f_x').value; if (hasPlainChords(content)) { content = toChordPro(content); $('#f_x').value = content } if (!$('#f_k').value) autoKey(content);
