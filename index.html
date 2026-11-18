@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="WorshipLibrary">
+        <title>WorshipLibrary</title>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <style>
+            :root {
+                --bg: #0d0d0f;
+                --sf: #17171b;
+                --sf2: #202026;
+                --bd: #2d2d36;
+                --tx: #ececf0;
+                --mu: #9a9aa6;
+                --gd: #e6b422;
+                --gd2: #f5d160;
+                --rd: #e5534b;
+                color-scheme: dark;
+                box-sizing: border-box;
+                padding-top: env(safe-area-inset-top, 0px);
+                padding-bottom: env(safe-area-inset-bottom, 0px)
+            }
+
+            html {
+                scroll-padding-top: env(safe-area-inset-top, 0px)
+            }
+
+            * {
+                box-sizing: border-box
+            }
+
+            body {
+                margin: 0;
+                background: var(--bg);
+                color: var(--tx);
+                font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif
+            }
+
+            aside {
+                position: fixed;
+                left: 0;
+                top: env(safe-area-inset-top, 0px);
+                bottom: 0;
+                width: 230px;
+                background: var(--sf);
+                border-right: 1px solid var(--bd);
+                padding: 20px 14px;
+                z-index: 20;
+                transition: transform .2s
+            }
+
+            .brand {
+                color: var(--gd);
+                font-weight: 800;
+                font-size: 19px;
+                letter-spacing: .3px;
+                margin: 0 8px 22px
+            }
+
+            aside button {
+                display: block;
+                width: 100%;
+                text-align: left;
+                background: none;
+                border: 0;
+                color: var(--mu);
+                padding: 11px 12px;
+                border-radius: 8px;
+                font: inherit;
+                cursor: pointer;
+                margin-bottom: 3px
+            }
+
+            aside button.on,
+            aside button:hover {
+                background: var(--sf2);
+                color: var(--gd2)
+            }
+
+            .top {
+                display: none;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: var(--sf);
+                border-bottom: 1px solid var(--bd);
+                padding: 10px 14px;
+                align-items: center;
+                gap: 12px
+            }
+
+            .top b {
+                color: var(--gd)
+            }
+
+            main {
+                margin-left: 230px;
+                padding: 26px;
+                max-width: 1100px
+            }
+
+            h1 {
+                font-size: 24px;
+                margin: 0 0 18px
+            }
+
+            h2 {
+                font-size: 16px;
+                color: var(--gd2);
+                margin: 26px 0 10px
+            }
+
+            .card,
+            .stat {
+                background: var(--sf);
+                border: 1px solid var(--bd);
+                border-radius: 12px;
+                padding: 14px
+            }
+
+            .stats {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 12px
+            }
+
+            .stat b {
+                display: block;
+                font-size: 30px;
+                color: var(--gd)
+            }
+
+            .stat span {
+                color: var(--mu)
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+                gap: 12px
+            }
+
+            input,
+            select,
+            textarea {
+                background: var(--sf2);
+                color: var(--tx);
+                border: 1px solid var(--bd);
+                border-radius: 8px;
+                padding: 9px 11px;
+                font: inherit;
+                width: 100%
+            }
+
+            input:focus,
+            select:focus,
+            textarea:focus {
+                outline: 2px solid var(--gd);
+                border-color: transparent
+            }
+
+            label {
+                display: block;
+                font-size: 13px;
+                color: var(--mu);
+                margin: 0 0 4px
+            }
+
+            .btn {
+                background: var(--gd);
+                color: #111;
+                border: 0;
+                border-radius: 8px;
+                padding: 9px 15px;
+                font: inherit;
+                font-weight: 700;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block
+            }
+
+            .btn.g {
+                background: var(--sf2);
+                color: var(--tx);
+                border: 1px solid var(--bd);
+                font-weight: 500
+            }
+
+            .btn.d {
+                background: none;
+                color: var(--rd);
+                border: 1px solid var(--rd)
+            }
+
+            .btn.s {
+                padding: 5px 10px;
+                font-size: 13px
+            }
+
+            .btn:hover {
+                filter: brightness(1.1)
+            }
+
+            .row {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                align-items: center
+            }
+
+            .row>* {
+                flex: 0 0 auto
+            }
+
+            .row>.f {
+                flex: 1 1 160px
+            }
+
+            .chip {
+                display: inline-block;
+                background: var(--sf2);
+                border: 1px solid var(--bd);
+                color: var(--mu);
+                border-radius: 99px;
+                padding: 2px 10px;
+                font-size: 12px;
+                margin: 0 4px 4px 0
+            }
+
+            .chip.gd {
+                color: var(--gd2);
+                border-color: #5a4a14;
+                cursor: pointer
+            }
+
+            .song-t {
+                font-weight: 700;
+                font-size: 16px;
+                cursor: pointer
+            }
+
+            .song-t:hover {
+                color: var(--gd2)
+            }
+
+            .mu {
+                color: var(--mu);
+                font-size: 13px
+            }
+
+            .star {
+                background: none;
+                border: 0;
+                font-size: 20px;
+                cursor: pointer;
+                color: var(--mu)
+            }
+
+            .star.on {
+                color: var(--gd)
+            }
+
+            .err {
+                color: var(--rd);
+                font-size: 13px;
+                margin: 6px 0
+            }
+
+            .banner {
+                background: #3a2f0b;
+                color: var(--gd2);
+                border-radius: 8px;
+                padding: 8px 12px;
+                margin-bottom: 14px;
+                font-size: 13px
+            }
+
+            .form {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 12px;
+                margin-bottom: 12px
+            }
+
+            .ed {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 14px
+            }
+
+            textarea {
+                font-family: ui-monospace, Menlo, Consolas, monospace;
+                min-height: 360px;
+                resize: vertical;
+                white-space: pre;
+                overflow: auto
+            }
+
+            .pv {
+                background: var(--sf);
+                border: 1px solid var(--bd);
+                border-radius: 10px;
+                padding: 14px;
+                min-height: 360px;
+                overflow: auto
+            }
+
+            .song {
+                --fs: 20px;
+                --cs: 17px;
+                overflow-x: auto
+            }
+
+            .ln {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-end;
+                min-height: 1.3em;
+                margin: 2px 0
+            }
+
+            .seg {
+                display: inline-flex;
+                flex-direction: column
+            }
+
+            .c {
+                color: var(--gd);
+                font-weight: 700;
+                font-size: var(--cs);
+                padding-right: .45em;
+                white-space: pre;
+                line-height: 1.3
+            }
+
+            .l {
+                font-size: var(--fs);
+                white-space: pre;
+                line-height: 1.35
+            }
+
+            .sec {
+                margin: 20px 0 6px;
+                color: var(--gd2);
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .8px;
+                font-size: calc(var(--fs)*.7);
+                border-bottom: 1px solid var(--bd);
+                padding-bottom: 2px
+            }
+
+            .tools {
+                position: sticky;
+                top: env(safe-area-inset-top, 0px);
+                background: var(--bg);
+                padding: 10px 0;
+                z-index: 5;
+                border-bottom: 1px solid var(--bd);
+                margin-bottom: 14px
+            }
+
+            .ov {
+                position: fixed;
+                inset: 0;
+                background: #000a;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 50;
+                padding: 20px
+            }
+
+            .ov .card {
+                max-width: 380px
+            }
+
+            .toast {
+                position: fixed;
+                bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--gd);
+                color: #111;
+                padding: 9px 16px;
+                border-radius: 8px;
+                font-weight: 600;
+                z-index: 60
+            }
+
+            body.stage aside,
+            body.stage .top,
+            body.stage .hd {
+                display: none
+            }
+
+            body.stage main {
+                margin: 0;
+                max-width: none;
+                padding: 12px 18px
+            }
+
+            @media(max-width:800px) {
+                aside {
+                    transform: translateX(-100%)
+                }
+
+                aside.open {
+                    transform: none
+                }
+
+                .top {
+                    display: flex
+                }
+
+                main {
+                    margin: 0;
+                    padding: 16px
+                }
+
+                .ed {
+                    grid-template-columns: 1fr
+                }
+
+                textarea,
+                .pv {
+                    min-height: 260px
+                }
+            }
+        </style>
+</head>
+
+<body>
+    <div class="top"><button class="btn g s"
+            onclick="document.querySelector('aside').classList.toggle('open')">☰</button><b>WorshipLibrary</b></div>
+    <aside>
+        <div class="brand">♪ WorshipLibrary</div>
+        <div id="nav"></div>
+    </aside>
+    <main id="m"></main>
+    <script>
+        const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const DEF = ['Alabanza', 'Adoración', 'Himnos', 'Congregacionales', 'Especiales', 'Otras'];
+        const KEYS = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'].flatMap(k => [k, k + 'm']);
+        const SAMPLE = `[G#m]Yo navegaré
+En el río de tu [F#]Espíritu
+Y allí [E]adoraré [C#m]
+[D#7]Al Dios que me amo
+
+[Estribillo]
+[G#m]Espíritu, Espíritu
+Desciende como [F#]fuego
+Como en Pentecostés [E][C#m]
+[D#7]Y lléname de nuevo`;
+
+        /* ============================================================
+           ⚙️ CONFIGURACIÓN DE SUPABASE
+           Reemplaza los dos valores siguientes por los de tu proyecto
+           (Project Settings → API). Si los dejas como están, la app
+           funcionará en modo local (solo este navegador).
+           ============================================================ */
+        const SUPABASE_URL = 'https://ifpycikliicsoycwpaqx.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmcHljaWtsaWljc295Y3dwYXF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwMTczNzMsImV4cCI6MjExMDU5MzM3M30.nkVN8D_cYYBki16tFu_ytrlcgk9IDI7cLDVhx_7_lMA';
+
+        const useCloud = typeof window.supabase !== 'undefined'
+            && SUPABASE_URL.startsWith('https://ifpycikliicsoycwpaqx.supabase.co')
+            && !SUPABASE_URL.includes('https://ifpycikliicsoycwpaqx.supabase.co')
+            && SUPABASE_KEY
+            && !SUPABASE_KEY.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmcHljaWtsaWljc295Y3dwYXF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwMTczNzMsImV4cCI6MjExMDU5MzM3M30.nkVN8D_cYYBki16tFu_ytrlcgk9IDI7cLDVhx_7_lMA');
+        const db = useCloud ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+        let songs = [], meta = { cats: [] }, S = { view: 'dash', id: null, q: '', key: '', cat: '', fav: false, tr: 0, fs: 20, cs: 17, stage: false, loading: true };
+        const cats = () => [...DEF, ...(meta.cats || [])];
+
+        /* ---------- ChordPro ---------- */
+        const CH = /^[A-G][#b]?(?:[mM+°º-]|maj|min|dim|aug|sus|add|[0-9]|[#b()])*(?:\/[A-G][#b]?)?$/;
+        const SH = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'], FL = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+        const idx = n => { let i = SH.indexOf(n); return i < 0 ? FL.indexOf(n) : i };
+        function tr(ch, n, flat) { return n ? ch.replace(/[A-G][#b]?/g, m => { let i = idx(m); return i < 0 ? m : (flat ? FL : SH)[((i + n) % 12 + 12) % 12] }) : ch }
+        function useFlat(s, n) { if (/\[[A-G]b/.test(s.content)) return true; const k = (s.key || '').match(/^([A-G][#b]?)(m?)/); if (!k) return false; const t = ((idx(k[1]) + n) % 12 + 12) % 12; return (k[2] ? [0, 2, 3, 5, 7, 10] : [1, 3, 5, 8, 10]).includes(t) }
+        function chordHTML(src, n = 0, flat = false) {
+            return src.split('\n').map(line => {
+                const sec = line.match(/^\s*\[([^\]]+)\]\s*$/);
+                if (sec && !CH.test(sec[1].trim())) return `<div class="sec">${esc(sec[1])}</div>`;
+                if (!/\[[^\]]+\]/.test(line)) return `<div class="ln"><span class="l">${esc(line) || '&nbsp;'}</span></div>`;
+                const segs = [], re = /\[([^\]]*)\]/g; let cur = { c: '', t: '' }, last = 0, m;
+                while ((m = re.exec(line))) { cur.t += line.slice(last, m.index); segs.push(cur); cur = { c: m[1].trim(), t: '' }; last = re.lastIndex }
+                cur.t += line.slice(last); segs.push(cur);
+                return '<div class="ln">' + segs.filter(s => s.c || s.t).map(s => `<span class="seg"><span class="c">${s.c ? esc(CH.test(s.c) ? tr(s.c, n, flat) : s.c) : '&nbsp;'}</span><span class="l">${esc(s.t) || '&nbsp;'}</span></span>`).join('') + '</div>';
+            }).join('');
+        }
+
+        /* ============================================================
+           PERSISTENCIA: Supabase (nube) o localStorage (fallback)
+           ============================================================ */
+        const lsSave = () => { try { localStorage.setItem('wl_songs', JSON.stringify(songs)); localStorage.setItem('wl_meta', JSON.stringify(meta)) } catch (e) { } };
+
+        async function put(s) {
+            if (db) {
+                const { error } = await db.from('songs').upsert({ id: s.id, data: s });
+                if (error) throw error;
+            } else {
+                lsSave();
+            }
+            const i = songs.findIndex(x => x.id === s.id);
+            i < 0 ? songs.push(s) : songs[i] = s;
+        }
+
+        async function del(id) {
+            if (db) {
+                const { error } = await db.from('songs').delete().eq('id', id);
+                if (error) throw error;
+            } else {
+                lsSave();
+            }
+            songs = songs.filter(x => x.id !== id);
+        }
+
+        async function putMeta() {
+            if (db) {
+                const { error } = await db.from('wl_meta').upsert({ id: 'meta', data: meta });
+                if (error) throw error;
+            } else {
+                lsSave();
+            }
+        }
+
+        async function init() {
+            if (db) {
+                try {
+                    const [songsRes, metaRes] = await Promise.all([
+                        db.from('songs').select('data'),
+                        db.from('wl_meta').select('data').eq('id', 'meta').maybeSingle()
+                    ]);
+                    if (songsRes.error) throw songsRes.error;
+                    if (metaRes.error) throw metaRes.error;
+                    songs = (songsRes.data || []).map(r => r.data).filter(Boolean);
+                    meta = metaRes.data?.data || { cats: [] };
+                    if (!Array.isArray(meta.cats)) meta.cats = [];
+                    S.loading = false;
+                    draw();
+                    setupRealtime();
+                } catch (e) {
+                    console.error(e);
+                    S.loading = false;
+                    toast('Error de conexión: ' + (e.message || e));
+                    draw();
+                }
+            } else {
+                try {
+                    songs = JSON.parse(localStorage.getItem('wl_songs') || '[]');
+                    meta = JSON.parse(localStorage.getItem('wl_meta') || '{"cats":[]}');
+                } catch (e) { }
+                S.loading = false;
+                draw();
+            }
+        }
+
+        function setupRealtime() {
+            if (!db) return;
+            try {
+                db.channel('wl_songs_rt')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'songs' }, async () => {
+                        const { data } = await db.from('songs').select('data');
+                        if (data) { songs = data.map(r => r.data).filter(Boolean); draw(true) }
+                    }).subscribe();
+                db.channel('wl_meta_rt')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'wl_meta' }, async () => {
+                        const { data } = await db.from('wl_meta').select('data').eq('id', 'meta').maybeSingle();
+                        meta = data?.data || { cats: [] };
+                        if (!Array.isArray(meta.cats)) meta.cats = [];
+                        draw(true);
+                    }).subscribe();
+            } catch (e) { /* realtime no disponible, la app sigue funcionando */ }
+        }
+
+        /* ---------- UI helpers ---------- */
+        function toast(t) { const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 2800) }
+        function ask(msg) { return new Promise(r => { const o = document.createElement('div'); o.className = 'ov'; o.innerHTML = `<div class="card"><p>${esc(msg)}</p><div class="row"><button class="btn d" id="y">Eliminar</button><button class="btn g" id="n">Cancelar</button></div></div>`; document.body.appendChild(o); o.querySelector('#y').onclick = () => { o.remove(); r(true) }; o.querySelector('#n').onclick = () => { o.remove(); r(false) } }) }
+        function go(v, id) { if (S.stage) stage(false); S.view = v; S.id = id || null; if (v === 'song') { S.tr = 0; S.fs = window.innerWidth < 800 ? 17 : 20; S.cs = S.fs - 3 } document.querySelector('aside').classList.remove('open'); draw(); scrollTo(0, 0) }
+        const get = id => songs.find(s => s.id === id);
+        const fmt = d => d ? new Date(d).toLocaleDateString('es') : '';
+        async function fav(id) { const s = get(id); try { await put({ ...s, fav: !s.fav }); draw(true) } catch (e) { toast('No se pudo guardar') } }
+        async function rm(id) { if (await ask('¿Eliminar esta canción de forma permanente?')) { try { await del(id); toast('Canción eliminada'); if (S.view === 'song' || S.view === 'edit') go('lib'); else draw(true) } catch (e) { toast('No se pudo eliminar') } } }
+        function card(s) {
+            return `<div class="card"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><div><div class="song-t" onclick="go('song','${s.id}')">${esc(s.title)}</div><div class="mu">${esc(s.artist || 'Sin artista')}</div></div><button class="star ${s.fav ? 'on' : ''}" onclick="fav('${s.id}')" title="Favorita">${s.fav ? '★' : '☆'}</button></div>
+<div style="margin:8px 0">${s.key ? `<span class="chip">Tono ${esc(s.key)}</span>` : ''}<span class="chip">Capo ${s.capo || 0}</span>${s.bpm ? `<span class="chip">${s.bpm} BPM</span>` : ''}<span class="chip gd">${esc(s.cat || 'Otras')}</span></div>
+<div class="mu">Creada ${fmt(s.createdAt)}</div><div class="row" style="margin-top:10px"><button class="btn s" onclick="go('song','${s.id}')">Abrir</button><button class="btn g s" onclick="go('edit','${s.id}')">Editar</button>${s.url ? `<a class="btn g s" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">Ver en Cifra Club</a>` : ''}<button class="btn d s" onclick="rm('${s.id}')">Eliminar</button></div></div>`
+        }
+
+        /* ---------- Vistas ---------- */
+        function dash() {
+            const rec = [...songs].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 4), fv = songs.filter(s => s.fav).slice(0, 4);
+            return `<h1>Inicio</h1><div class="row" style="margin-bottom:16px"><input class="f" id="dq" placeholder="Buscar por nombre o artista…" onkeydown="if(event.key==='Enter')searchGo()"><button class="btn" onclick="searchGo()">Buscar</button></div>
+<div class="stats"><div class="stat"><b>${songs.length}</b><span>Canciones</span></div><div class="stat"><b>${songs.filter(s => s.fav).length}</b><span>Favoritas</span></div><div class="stat"><b>${cats().length}</b><span>Categorías</span></div></div>
+<h2>Agregadas recientemente</h2>${rec.length ? `<div class="grid">${rec.map(card).join('')}</div>` : '<p class="mu">Aún no hay canciones. <a href="#" style="color:var(--gd)" onclick="go(\'edit\');return false">Crea la primera</a>.</p>'}
+<h2>Favoritas</h2>${fv.length ? `<div class="grid">${fv.map(card).join('')}</div>` : '<p class="mu">Marca canciones con ★ para verlas aquí.</p>'}
+<h2>Categorías</h2>${cats().map(c => `<span class="chip gd" onclick="S.cat='${esc(c)}';go('lib')">${esc(c)} · ${songs.filter(s => (s.cat || 'Otras') === c).length}</span>`).join('')}`
+        }
+        function searchGo() { S.q = $('#dq').value; S.key = ''; S.cat = ''; S.fav = false; go('lib') }
+        function filtered() { const q = S.q.trim().toLowerCase(); return songs.filter(s => (!q || (s.title + ' ' + (s.artist || '')).toLowerCase().includes(q)) && (!S.key || s.key === S.key) && (!S.cat || (s.cat || 'Otras') === S.cat) && (!S.fav || s.fav)).sort((a, b) => a.title.localeCompare(b.title)) }
+        function lib() {
+            const ks = [...new Set(songs.map(s => s.key).filter(Boolean))].sort();
+            return `<h1>Biblioteca</h1><div class="row" style="margin-bottom:14px"><input class="f" placeholder="Buscar por nombre o artista…" value="${esc(S.q)}" oninput="S.q=this.value;list()">
+<select class="f" onchange="S.key=this.value;list()"><option value="">Todas las tonalidades</option>${ks.map(k => `<option ${k === S.key ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select>
+<select class="f" onchange="S.cat=this.value;list()"><option value="">Todas las categorías</option>${cats().map(c => `<option ${c === S.cat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+<label style="margin:0"><input type="checkbox" style="width:auto" ${S.fav ? 'checked' : ''} onchange="S.fav=this.checked;list()"> Solo favoritas</label><button class="btn" onclick="go('edit')">+ Nueva</button></div><div class="grid" id="lst">${listHTML()}</div>`
+        }
+        const listHTML = () => { const f = filtered(); return f.length ? f.map(card).join('') : '<p class="mu">No se encontraron canciones.</p>' };
+        const list = () => { $('#lst').innerHTML = listHTML() };
+        function edit() {
+            const s = S.id ? get(S.id) : null; if (S.id && !s) return '<p>Canción no encontrada.</p>';
+            const v = s || { title: '', artist: '', key: '', capo: 0, bpm: '', cat: 'Alabanza', url: '', content: '' };
+            return `<h1>${s ? 'Editar canción' : 'Nueva canción'}</h1><div class="form">
+<div><label>Título *</label><input id="f_t" maxlength="120" value="${esc(v.title)}"></div><div><label>Artista / grupo</label><input id="f_a" value="${esc(v.artist)}"></div>
+<div><label>Tonalidad original</label><select id="f_k" onchange="pal()"><option value="">Auto (se detecta)</option>${KEYS.map(k => `<option ${k === v.key ? 'selected' : ''}>${k}</option>`).join('')}</select></div>
+<div><label>Capo (0–12)</label><input id="f_c" type="number" min="0" max="12" value="${v.capo || 0}"></div><div><label>BPM</label><input id="f_b" type="number" min="20" max="300" value="${v.bpm || ''}"></div>
+<div><label>Categoría</label><select id="f_g">${cats().map(c => `<option ${c === v.cat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div></div>
+<div style="margin-bottom:12px"><label>Enlace de Cifra Club (pega aquí la URL)</label><input id="f_u" placeholder="https://www.cifraclub.com/…" value="${esc(v.url)}" oninput="fromUrl()"></div>
+<div class="row" style="margin-bottom:6px"><label style="margin:0" class="f">Pega aquí la canción de Cifra Club (acordes sobre la letra): los acordes se colocan solos. También puedes escribir [acorde] a mano.</label><button class="btn g s" onclick="insC()">Insertar [ ]</button><button class="btn s" onclick="pasteImport()">Pegar texto largo</button><button class="btn g s" onclick="$('#f_x').value=SAMPLE;pv()">Ejemplo</button></div>
+<div id="pal" class="row" style="margin-bottom:8px"></div><div class="ed"><textarea id="f_x" spellcheck="false" oninput="pv()" onpaste="onPaste(event)" placeholder="Pega aquí la letra con acordes…">${esc(v.content)}</textarea><div class="pv song" id="pv"></div></div>
+<div class="err" id="er"></div><div class="row"><button class="btn" id="sv" onclick="save()">Guardar</button><button class="btn g" onclick="go(${s ? `'song','${s.id}'` : `'lib'`})">Cancelar</button>${s ? `<button class="btn d" onclick="rm('${s.id}')">Eliminar</button>` : ''}</div>`
+        }
+        const IGN = /^(?:[|\/\\\-–—:]+|\(?[x×]\d+\)?|\.{2,})$/i;
+        const isChordLine = l => { const t = l.trim().split(/\s+/); return !!l.trim() && t.every(x => CH.test(x) || IGN.test(x)) && t.some(x => CH.test(x)) };
+        const hasBracketChord = txt => [...txt.matchAll(/\[([^\]]+)\]/g)].some(m => CH.test(m[1].trim()));
+        const hasPlainChords = txt => !hasBracketChord(txt) && txt.replace(/\r/g, '').split('\n').some(isChordLine);
+        function guessKey(cp) { for (const m of cp.matchAll(/\[([^\]]+)\]/g)) { const c = m[1].trim(); if (CH.test(c)) { const r = c.match(/^([A-G][#b]?)(m(?!aj))?/); const k = r ? r[1] + (r[2] || '') : ''; return KEYS.includes(k) ? k : '' } } return '' }
+        function toChordPro(txt) {
+            const L = txt.replace(/\r/g, '').replace(/\u00a0/g, ' ').replace(/\t/g, '    ').split('\n'), out = [];
+            const isC = isChordLine, bc = l => l.trim().split(/\s+/).filter(x => CH.test(x)).map(c => '[' + c + ']').join(' ');
+            const NM = '(?:pr[eé]-?\\s?)?(?:intro(?:ducci[oó]n)?|verso|estrofa|coro|estribillo|puente|instrumental|interludio|final|outro|solo|tag|coda|verse|chorus|bridge|refr[aã]o|ponte|(?:primeira|segunda|terceira)\\s+parte|parte)(?:\\s*\\d+)?';
+            const SEC = new RegExp('^\\s*\\[?\\s*(' + NM + ')\\s*\\]?\\s*:?\\s*$', 'i'), SEC2 = new RegExp('^\\s*(' + NM + ')\\s*:\\s*(.+)$', 'i'), SEC3 = /^\s*\[([^\]]+)\]\s+(.+)$/;
+            for (let i = 0; i < L.length; i++) {
+                const l = L[i], sm = l.match(SEC), s2 = l.match(SEC2), s3 = l.match(SEC3);
+                if (sm && !isC(l)) { out.push('[' + sm[1].trim() + ']'); continue }
+                if (s2 && isC(s2[2])) { out.push('[' + s2[1] + ']'); out.push(bc(s2[2])); continue }
+                if (s3 && !CH.test(s3[1].trim()) && isC(s3[2])) { out.push('[' + s3[1].trim() + ']'); out.push(bc(s3[2])); continue }
+                if (isC(l)) {
+                    const nx = L[i + 1];
+                    if (nx !== undefined && nx.trim() && !isC(nx) && !SEC.test(nx) && !SEC2.test(nx) && !SEC3.test(nx)) {
+                        let s = nx;[...l.matchAll(/\S+/g)].reverse().forEach(m => { if (!CH.test(m[0])) return; if (m.index > s.length) s = s.padEnd(m.index); s = s.slice(0, m.index) + '[' + m[0] + ']' + s.slice(m.index) });
+                        out.push(s.trimEnd()); i++;
+                    } else out.push(bc(l));
+                    continue
+                }
+                out.push(l.trimEnd());
+            }
+            return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+        }
+        function autoKey(cp) { const k = $('#f_k'); if (k && !k.value) { const g = guessKey(cp); if (g) { k.value = g; pal(); return g } } return '' }
+        function onPaste(e) {
+            const t = (e.clipboardData || window.clipboardData).getData('text');
+            if (!t || !hasPlainChords(t)) return;
+            e.preventDefault();
+            const x = $('#f_x'), cp = toChordPro(t), a = x.selectionStart, b = x.selectionEnd;
+            x.value = x.value.slice(0, a) + cp + x.value.slice(b);
+            const g = autoKey(x.value); pv();
+            toast('Acordes colocados automáticamente' + (g ? ' · Tono ' + g : ''));
+        }
+        function pal() {
+            const el = $('#pal'), k = $('#f_k'); if (!el) return;
+            const m = (k.value || '').match(/^([A-G][#b]?)(m?)$/);
+            if (!m) { el.innerHTML = '<span class="mu">Elige la tonalidad para ver los acordes rápidos.</span>'; return }
+            const r = idx(m[1]), minor = !!m[2], flat = /b/.test(m[1]) || ['F', 'Dm', 'Gm', 'Cm', 'Fm'].includes(k.value);
+            const D = minor ? [[0, 'm'], [3, ''], [5, 'm'], [7, ''], [8, ''], [10, '']] : [[0, ''], [2, 'm'], [4, 'm'], [5, ''], [7, ''], [9, 'm']];
+            el.innerHTML = '<span class="mu" style="margin-right:6px">Acordes de ' + esc(k.value) + ':</span>' + D.map(([n, q]) => { const c = (flat ? FL : SH)[(r + n) % 12] + q; return `<button type="button" class="btn g s" style="margin:0 4px 4px 0" onclick="insT('[${c}]')">${c}</button>` }).join('');
+        }
+        function insT(t) { const x = $('#f_x'), p = x.selectionStart; x.value = x.value.slice(0, p) + t + x.value.slice(x.selectionEnd); x.focus(); x.setSelectionRange(p + t.length, p + t.length); pv() }
+        function pasteImport() {
+            const o = document.createElement('div'); o.className = 'ov';
+            o.innerHTML = '<div class="card" style="width:min(640px,100%);max-width:640px"><b>Pegar y convertir a ChordPro</b><p class="mu">Copia la canción (acordes encima de la letra) y pégala aquí. Se convierte sola: acordes entre corchetes y secciones detectadas.</p><textarea id="pi" style="min-height:240px" placeholder="Pega aquí el texto…"></textarea><div class="row" style="margin-top:10px"><button class="btn" id="go1">Convertir e insertar</button><button class="btn g" id="no1">Cancelar</button></div></div>';
+            document.body.appendChild(o); $('#pi').focus();
+            o.querySelector('#no1').onclick = () => o.remove();
+            o.querySelector('#go1').onclick = () => {
+                const v = $('#pi').value; if (!v.trim()) return;
+                const cp = toChordPro(v), x = $('#f_x');
+                x.value = x.value.trim() ? x.value.trimEnd() + '\n\n' + cp : cp;
+                const g = autoKey(x.value); toast('Texto convertido' + (g ? ' · Tono ' + g : ''));
+                o.remove(); pv();
+            };
+        }
+        function fromUrl() {
+            let u; try { u = new URL($('#f_u').value.trim()) } catch (e) { return }
+            if (!/(^|\.)cifraclub\.com(\.br)?$/.test(u.hostname)) return;
+            const p = u.pathname.split('/').filter(Boolean); if (p.length < 2) return;
+            const nice = s => decodeURIComponent(s).replace(/-/g, ' ').replace(/(^|\s)\p{L}/gu, m => m.toUpperCase());
+            const a = $('#f_a'), t = $('#f_t'); let n = 0;
+            if (!t.value.trim()) { t.value = nice(p[1]); n++ }
+            if (!a.value.trim()) { a.value = nice(p[0]); n++ }
+            if (n) toast('Título y artista tomados del enlace; revísalos');
+        }
+        function pv() { $('#pv').innerHTML = chordHTML($('#f_x').value) || '<span class="mu">La vista previa aparece aquí.</span>' }
+        function insC() { const t = $('#f_x'), p = t.selectionStart; t.value = t.value.slice(0, p) + '[]' + t.value.slice(t.selectionEnd); t.focus(); t.setSelectionRange(p + 1, p + 1) }
+        async function save() {
+            let content = $('#f_x').value; if (hasPlainChords(content)) { content = toChordPro(content); $('#f_x').value = content } if (!$('#f_k').value) autoKey(content);
+            const g = i => $('#' + i).value, title = g('f_t').trim(), bpm = g('f_b').trim(), capo = g('f_c').trim(), url = g('f_u').trim(), E = [];
+            if (!title) E.push('El título es obligatorio.'); if (!content.trim()) E.push('El contenido ChordPro no puede estar vacío.');
+            if (bpm && !(/^\d+$/.test(bpm) && +bpm >= 20 && +bpm <= 300)) E.push('El BPM debe ser un número entre 20 y 300.');
+            if (capo && !(/^\d+$/.test(capo) && +capo <= 12)) E.push('El capo debe estar entre 0 y 12.');
+            if (url) { try { const u = new URL(url); if (!/^https?:$/.test(u.protocol) || !/(^|\.)cifraclub\.com(\.br)?$/.test(u.hostname)) E.push('El enlace debe ser de cifraclub.com.') } catch (e) { E.push('El enlace no es una URL válida.') } }
+            $('#er').innerHTML = E.map(esc).join('<br>'); if (E.length) return;
+            const old = S.id ? get(S.id) : null, now = new Date().toISOString();
+            const s = { id: old ? old.id : 's_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, artist: g('f_a').trim(), key: g('f_k'), capo: +capo || 0, bpm: bpm ? +bpm : '', cat: g('f_g'), content, url, fav: old ? !!old.fav : false, createdAt: old ? old.createdAt : now, updatedAt: now };
+            $('#sv').disabled = true;
+            try { await put(s); toast('Canción guardada'); go('song', s.id) } catch (e) { $('#sv').disabled = false; $('#er').textContent = 'No se pudo guardar: ' + (e.message || e) }
+        }
+        function song() {
+            const s = get(S.id); if (!s) return '<p>Canción no encontrada.</p>';
+            const fl = useFlat(s, S.tr), k = s.key ? tr(s.key, S.tr, fl) : '';
+            return `<div class="hd"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><div><h1 style="margin:0">${esc(s.title)}</h1><div class="mu">${esc(s.artist || '')}</div></div><button class="star ${s.fav ? 'on' : ''}" onclick="fav('${s.id}')">${s.fav ? '★' : '☆'}</button></div>
+<div style="margin:8px 0 4px">${k ? `<span class="chip">Tono ${esc(k)}${S.tr ? ' (original ' + esc(s.key) + ')' : ''}</span>` : ''}<span class="chip">Capo ${s.capo || 0}</span>${s.bpm ? `<span class="chip">${s.bpm} BPM</span>` : ''}<span class="chip gd">${esc(s.cat || 'Otras')}</span></div></div>
+<div class="tools row"><span class="mu">Tono</span><button class="btn g s" onclick="S.tr--;redraw()">−</button><b style="min-width:30px;text-align:center">${S.tr > 0 ? '+' : ''}${S.tr}</b><button class="btn g s" onclick="S.tr++;redraw()">+</button><button class="btn g s" onclick="S.tr=0;redraw()">Original</button>
+<span class="mu">Letra</span><button class="btn g s" onclick="S.fs=Math.max(10,S.fs-2);redraw()">A−</button><button class="btn g s" onclick="S.fs=Math.min(60,S.fs+2);redraw()">A+</button>
+<span class="mu">Acordes</span><button class="btn g s" onclick="S.cs=Math.max(10,S.cs-2);redraw()">−</button><button class="btn g s" onclick="S.cs=Math.min(60,S.cs+2);redraw()">+</button>
+<button class="btn g s" onclick="fs()">Pantalla completa</button><button class="btn s" onclick="stage(!S.stage)">${S.stage ? 'Salir de escenario' : 'Modo escenario'}</button></div>
+<div class="song" id="sg" style="--fs:${S.fs}px;--cs:${S.cs}px">${chordHTML(s.content, S.tr, fl)}</div>
+<div class="row hd" style="margin-top:24px">${s.url ? `<a class="btn" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">Ver en Cifra Club</a>` : ''}<button class="btn g" onclick="go('edit','${s.id}')">Editar</button><button class="btn d" onclick="rm('${s.id}')">Eliminar</button></div>`
+        }
+        function redraw() { const y = scrollY; draw(); scrollTo(0, y) }
+        function fs() { const d = document; d.fullscreenElement ? d.exitFullscreen() : (d.documentElement.requestFullscreen ? d.documentElement.requestFullscreen().catch(() => toast('Pantalla completa no disponible aquí')) : toast('Pantalla completa no disponible')) }
+        function stage(on) { S.stage = on; document.body.classList.toggle('stage', on); if (on) { S.fs = Math.max(S.fs, 30); S.cs = Math.max(S.cs, 26) } if (S.view === 'song') draw() }
+        function catsView() {
+            return `<h1>Categorías</h1><div class="row" style="margin-bottom:16px"><input class="f" id="nc" maxlength="40" placeholder="Nueva categoría…" onkeydown="if(event.key==='Enter')addCat()"><button class="btn" onclick="addCat()">Agregar</button></div><div class="err" id="er"></div>
+<div class="grid">${cats().map(c => { const n = songs.filter(s => (s.cat || 'Otras') === c).length, custom = !DEF.includes(c); return `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(c)}</b><span class="chip">${n} canciones</span></div><div class="row" style="margin-top:8px"><button class="btn g s" onclick="S.cat='${esc(c)}';go('lib')">Ver canciones</button>${custom ? `<button class="btn d s" onclick="delCat('${esc(c)}')">Eliminar</button>` : ''}</div></div>` }).join('')}</div>`
+        }
+        async function addCat() {
+            const v = $('#nc').value.trim(); if (!v) return $('#er').textContent = 'Escribe un nombre.'; if (cats().some(c => c.toLowerCase() === v.toLowerCase())) return $('#er').textContent = 'Esa categoría ya existe.';
+            try { meta = { ...meta, cats: [...(meta.cats || []), v] }; await putMeta(); draw() } catch (e) { toast('No se pudo guardar') }
+        }
+        async function delCat(c) {
+            if (songs.some(s => s.cat === c)) return $('#er').textContent = 'Hay canciones en esa categoría; cámbialas antes de eliminarla.';
+            try { meta = { ...meta, cats: (meta.cats || []).filter(x => x !== c) }; await putMeta(); draw() } catch (e) { toast('No se pudo guardar') }
+        }
+        function bkView() {
+            return `<h1>Respaldo</h1><div class="card" style="max-width:560px"><p>Tienes <b>${songs.length}</b> canciones. Descarga un archivo con todas ellas y guárdalo en tu correo, Drive o computadora.</p>
+<div class="row"><button class="btn" onclick="exportBk()">Descargar respaldo</button></div>
+<h2>Restaurar</h2><p class="mu">Elige un archivo de respaldo. Las canciones se agregan; si ya existen, se actualizan. No se borra nada.</p>
+<input type="file" accept=".json,application/json" onchange="importBk(this.files[0])"></div>`}
+        function exportBk() {
+            const d = JSON.stringify({ app: 'WorshipLibrary', date: new Date().toISOString(), meta, songs }, null, 1);
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([d], { type: 'application/json' }));
+            a.download = 'worshiplibrary-respaldo-' + new Date().toISOString().slice(0, 10) + '.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Respaldo descargado');
+        }
+        async function importBk(f) {
+            if (!f) return;
+            try {
+                const d = JSON.parse(await f.text()), L = Array.isArray(d) ? d : d.songs;
+                if (!Array.isArray(L)) throw new Error('formato');
+                if (d.meta && d.meta.cats) { meta = { ...meta, cats: [...new Set([...(meta.cats || []), ...d.meta.cats])] }; await putMeta() }
+                let n = 0; for (const x of L) { if (x && x.id && x.title) { await put(x); n++ } }
+                toast(n + ' canciones restauradas'); draw();
+            } catch (e) { toast('Archivo no válido') }
+        }
+        function draw(soft) {
+            if (soft && S.view === 'edit') return;
+            const N = [['dash', 'Inicio'], ['lib', 'Biblioteca'], ['edit', 'Nueva canción'], ['cats', 'Categorías'], ['bk', 'Respaldo']];
+            $('#nav').innerHTML = N.map(([v, t]) => `<button class="${(S.view === v && !(v === 'edit' && S.id)) ? 'on' : ''}" onclick="go('${v}')">${t}</button>`).join('') + `<div class="mu" style="margin:16px 8px">${db ? '☁ Sincronizado con la nube' : 'Guardado solo en este navegador'}</div>`;
+            const m = $('#m');
+            if (S.loading) { m.innerHTML = '<p class="mu">Cargando…</p>'; return }
+            const ban = !db && S.view !== 'song' ? '<div class="banner">Modo local: tus canciones se guardan solo en este navegador. Para sincronizarlas entre dispositivos, configura Supabase en el código (ver instrucciones).</div>' : '';
+            m.innerHTML = ban + ({ dash, lib, edit, song, cats: catsView, bk: bkView }[S.view] || dash)();
+            if (S.view === 'edit') { pv(); pal() }
+        }
+        init();
+    </script>
+</body>
+
+</html>
