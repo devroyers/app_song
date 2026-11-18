@@ -464,16 +464,16 @@ Como en Pentecostés [E][C#m]
            (Project Settings → API). Si los dejas como están, la app
            funcionará en modo local (solo este navegador).
            ============================================================ */
-        const SUPABASE_URL = 'https://ifpycikliicsoycwpaqx.supabase.co';
+           
+               const SUPABASE_URL = 'https://ifpycikliicsoycwpaqx.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmcHljaWtsaWljc295Y3dwYXF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwMTczNzMsImV4cCI6MjExMDU5MzM3M30.nkVN8D_cYYBki16tFu_ytrlcgk9IDI7cLDVhx_7_lMA';
 
+        // Validación correcta: Solo verifica que exista una URL y que tengas la clave.
         const useCloud = typeof window.supabase !== 'undefined'
-            && SUPABASE_URL.startsWith('https://ifpycikliicsoycwpaqx.supabase.co')
-            && !SUPABASE_URL.includes('https://ifpycikliicsoycwpaqx.supabase.co')
-            && SUPABASE_KEY
-            && !SUPABASE_KEY.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmcHljaWtsaWljc295Y3dwYXF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwMTczNzMsImV4cCI6MjExMDU5MzM3M30.nkVN8D_cYYBki16tFu_ytrlcgk9IDI7cLDVhx_7_lMA');
+            && SUPABASE_URL.startsWith('https://')
+            && SUPABASE_KEY;
+            
         const db = useCloud ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
-
         let songs = [], meta = { cats: [] }, S = { view: 'dash', id: null, q: '', key: '', cat: '', fav: false, tr: 0, fs: 20, cs: 17, stage: false, loading: true };
         const cats = () => [...DEF, ...(meta.cats || [])];
 
